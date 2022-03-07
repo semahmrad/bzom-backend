@@ -1,0 +1,40 @@
+{
+  "name": "bzom-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "nodemon app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.1",
+    "cors": "^2.8.5",
+    "express": "^4.17.2",
+    "express-rate-limit": "^6.2.0",
+    "file-system": "^2.2.2",
+    "form-data": "^4.0.0",
+    "generate-password": "^1.7.0",
+    "geoip-lite": "^1.4.3",
+    "googleapis": "^95.0.0",
+    "imagemin": "^8.0.1",
+    "imagemin-mozjpeg": "^10.0.0",
+    "ipware": "^2.0.0",
+    "is-jpg": "^3.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "koa-multer": "^1.0.2",
+    "mongoose": "^6.1.7",
+    "multer": "^1.4.4",
+    "node-lockup": "^1.0.3",
+    "nodemailer": "^6.7.2",
+    "nodemon": "^2.0.15",
+    "passport": "^0.5.2",
+    "passport-jwt": "^4.0.0",
+    "path": "^0.12.7",
+    "request-country": "^0.1.5"
+  }
+}
