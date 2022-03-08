@@ -95,118 +95,52 @@ router.post("/verify/account",async(req, res) => {
     
 });
 
-
-router.post("/change/profile/picture",upload.single('newProfilePic'), async (req, res) => {
-    let userId=req.user.id;
-    let imgData=readFileSync(req.file.path);
-    let stats = statSync(req.file.path);
-    let imgSizeInBytes = stats.size;
-    let imgSizeInMegabytes = imgSizeInBytes / (1024*1024);
-    if(userId&&imgData&&stats&&imgSizeInBytes){
-       console.log(imgSizeInBytes)
-        if(imgSizeInMegabytes>5){
-            res.json({
-                code:401,
-                msg:'image too big ..!'
-            });
-            console.log('image too big')
-           // deleteImageFromServer(req.file);
-        }else{
-            let minibuffer = await compressImg(imgData);
-
-            await User.updateOne(
-                {_id:userId},
-                {profilePic:minibuffer}
-            ).then(modifydata=>{
-                res.json({
-                    code:200,
-                    msg:'Successful Change Images',
-                    newPicture:minibuffer.toString('base64'),
-                });
-              console.log('modify')  
-            }).catch(err=>{
-                res.json({
-                    code:501,
-                    msg:'problem to change this picture'
-                })
-            });
-        }
-       
-        deleteImageFromServer(req.file)
-    }
-    else{res.json({code:100,msg:'problem'});}
-});
-
-router.post("/add/picture", upload.single("newPic"),async(req, res) => {
-    let imgData = fs.readFileSync(req.file.path)
-    //imgDesc = req.body.textPic;
-    let stats = fs.statSync(req.file.path)
-    let imgSizeInBytes = stats.size;
-    let imgSizeInMegabytes = imgSizeInBytes / (1024 * 1024);
-    if (imgSizeInMegabytes > IMAGE_MAX_SIZE) {
-        res.send("image too big")
-    }else {
-        User.findById(req.user.id).then(async user => {
-            console.log(user.gallery.length)
-            if (user.gallery.length < 5) {
-                console.log("size before compress => " + imgData.toString().length)
-                minibuffer = await compressImg(imgData);
-                let newImgData = {
-                    imageContent: minibuffer,
-                    update: req.body.action_date
-                }
-                user.gallery.push(newImgData);
-                user.save().then(() => {
-                    res.json({
-                        code: STATUES.OK,
-                        msg: "image uploaded",
-                    });
-                }).catch(err => res.send(err))
-            } else res.json({
-                code: STATUES.NOT_VALID,
-                msg: "you can not upload anymore images"
-            });
-        }).catch(err => res.send(err))
-    }
-       
-        res.send("hi")
-    });
-
-    router.post("/add/picture/test", upload.single("newPic"),async(req, res) => {
+    router.post("/add/picture/", upload.single("newPic"),async(req, res) => {
         let imgData = fs.readFileSync(req.file.path)
         //imgDesc = req.body.textPic;
         let stats = fs.statSync(req.file.path)
-        let imgSizeInBytes = stats.size;
-     
-
-            await User.findById(req.user.id).then(async user => {
-                console.log('then')
-                console.log(user.gallery.length)
-                if (user.gallery.length < 5) {
-                    
-             
-                    let minibuffer = await compressImg(imgData);
-                    let newImgData = {
-                        imageContent: minibuffer,
-                        //update: req.body.action_date
-                    }
-                    user.gallery.push(newImgData);
-                    user.save().then(() => {
-                        
-                        res.json({
-                            code: 200,
-                            msg: "image uploaded",
-                        });
-                    }).catch(err => {console.log('iam her1');res.send(err);})
-                } else res.json({
-                    code: 500,
-                    msg: "you can not upload anymore images"
+        let imgSizeInBytes = stats.size/ (1024 * 1024);
+        if(imgData&&stats&&imgSizeInBytes){
+            if(imgSizeInBytes>100){
+                res.json({
+                    code :400,
+                    msg:'image too big',
                 });
-            }).catch(err => {console.log('iam her2');res.send(err.message)})
-        
-           
-           
-        });
+                deleteImageFromServer(req.file);
+            }else{
+              
+                await User.findById(req.user.id).then(async user => {
+                    console.log('then')
+                    console.log(user.gallery.length)
+                    if (user.gallery.length <100) {
+                        
+                 
+                        let minibuffer = await compressImg(imgData);
+                        let newImgData = {
+                            imageContent: minibuffer,
+                            update:new Date(),
+                        }
+                        
+                        user.gallery.push(newImgData);
+                        user.save().then(() => {
+                            
+                            res.json({
+                                code: 200,
+                                msg: "image uploaded",
+                            });
+                        }).catch(err =>res.json({code:400,msg:'problem to add image'}))
+                    } else res.json({
+                        code: 500,
+                        msg: "you can not upload anymore images"
+                    });
+                    deleteImageFromServer(req.file)
+                }).catch(err => {res.json({code:501,msg:'problem to find user'})})
+            }
+            
+        }else{res.json({code:401,msg:'problem ...!!'})}
+    });
+
+
 export default router
 
     
