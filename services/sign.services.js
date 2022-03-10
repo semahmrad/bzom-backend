@@ -69,9 +69,10 @@ try{
 
     if(hashPassword&&imgData&&req.file&&username&&firstName&&lastName&&email&&birthday&&age){
 
-        if (imgSizeInMegabytes > 5) {
-            res.send("image too big");
-            deleteImageFromServer(req.file)
+        if (imgSizeInMegabytes > 10) {
+            
+            res.json({code:300,msg:'image too big'});
+            deleteImageFromServer(req.file);
             
         }else {
             console.log("size before compress => " + imgData.toString().length)

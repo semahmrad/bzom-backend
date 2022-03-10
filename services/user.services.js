@@ -5,7 +5,7 @@ import passport  from "passport";
 import fs from 'file-system';
 const { readFileSync, statSync } = fs;
 import multer from 'multer';
-import  {compressImg,deleteImageFromServer,createVerificationCode,SendVerifyEmail} from "../functions/user.functions.js";
+import  {compressImg,deleteImageFromServer,galleryToBase64,SendVerifyEmail} from "../functions/user.functions.js";
 
 const storage=multer.diskStorage({
     destination:(req,file,cb)=>{
@@ -96,10 +96,14 @@ router.post("/verify/account",async(req, res) => {
 });
 
     router.post("/add/picture/", upload.single("newPic"),async(req, res) => {
-        let imgData = fs.readFileSync(req.file.path)
-        //imgDesc = req.body.textPic;
-        let stats = fs.statSync(req.file.path)
-        let imgSizeInBytes = stats.size/ (1024 * 1024);
+    
+        if(req.file){
+            let imgData = fs.readFileSync(req.file.path)
+            //imgDesc = req.body.textPic;
+            let stats = fs.statSync(req.file.path)
+            let imgSizeInBytes = stats.size/ (1024 * 1024);
+    
+       
         if(imgData&&stats&&imgSizeInBytes){
             if(imgSizeInBytes>100){
                 res.json({
@@ -117,7 +121,7 @@ router.post("/verify/account",async(req, res) => {
                  
                         let minibuffer = await compressImg(imgData);
                         let newImgData = {
-                            imageContent: minibuffer,
+                            image: minibuffer,
                             update:new Date(),
                         }
                         
@@ -138,8 +142,27 @@ router.post("/verify/account",async(req, res) => {
             }
             
         }else{res.json({code:401,msg:'problem ...!!'})}
+    }
     });
+    
 
+    router.post("/gallery",async(req, res) => {
+        try{
+            console.log('i am in gallery');
+            let userId=req.user.id;
+            await User.findOne({userId}).then(user=>{
+                
+                res.json({
+                    code:200,
+                    msg:'user find',
+                    gallery:galleryToBase64(user.gallery),
+                });
+            }).catch(err=>{res.json({code:401,msg:err})});
+        }
+        catch(err){res.json({code:500,msg:err.message})}
+        
+    });
+    
 
 export default router
 

@@ -52,3 +52,20 @@ export const SendVerifyEmail =(dest,username,secretCode)=> {
         console.log("email is send", result)
     }).catch(error => console.log(error.message));
 }
+
+export const galleryToBase64 =(galleryArry)=> {
+    let galleryPayload=[]
+    let image={
+        img_id:'',
+        imageBase64:'',
+        update:'',
+    }
+    galleryArry.forEach(imageObject => {
+        image.imageId=imageObject._id
+        image.update=imageObject.update;
+        image.imageBase64=imageObject.image.toString('base64');
+        galleryPayload.push(image);
+    });
+    return galleryPayload;
+}
+

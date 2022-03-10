@@ -147,10 +147,9 @@ const userSchema = Schema({
     gallery: [
         {
            image:{
-               imageContent:{
-                type:Buffer,
-                contentType: String,
-               },
+            type:Buffer,
+            contentType: String,
+            //required: true,
            },
            update:Date,
         },
