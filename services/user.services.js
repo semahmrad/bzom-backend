@@ -12,7 +12,7 @@ const storage=multer.diskStorage({
         cb(null,'uploads');
     },
     filename:(req,file,cb)=>{
-        cb(null,new Date().toString().replace(/:/g,'_')+'_'+file.originalname+".jpg")
+        cb(null,new Date().toString().replace(/:/g,'_')+'_'+file.originalname+(Math.random() + 1).toString(36).substring(7)+".jpg")
     }
 });
 const filefilter=(req,file,cb)=>{
@@ -96,61 +96,69 @@ router.post("/verify/account",async(req, res) => {
 });
 
     router.post("/add/picture/", upload.single("newPic"),async(req, res) => {
+        
     
-        if(req.file){
-            let imgData = fs.readFileSync(req.file.path)
-            //imgDesc = req.body.textPic;
-            let stats = fs.statSync(req.file.path)
-            let imgSizeInBytes = stats.size/ (1024 * 1024);
-    
-       
-        if(imgData&&stats&&imgSizeInBytes){
-            if(imgSizeInBytes>100){
-                res.json({
-                    code :400,
-                    msg:'image too big',
-                });
-                deleteImageFromServer(req.file);
-            }else{
-              
-                await User.findById(req.user.id).then(async user => {
-                    console.log('then')
-                    console.log(user.gallery.length)
-                    if (user.gallery.length <100) {
-                        
-                 
-                        let minibuffer = await compressImg(imgData);
-                        let newImgData = {
-                            image: minibuffer,
-                            update:new Date(),
-                        }
-                        
-                        user.gallery.push(newImgData);
-                        user.save().then(() => {
-                            
-                            res.json({
-                                code: 200,
-                                msg: "image uploaded",
-                            });
-                        }).catch(err =>res.json({code:400,msg:'problem to add image'}))
-                    } else res.json({
-                        code: 500,
-                        msg: "you can not upload anymore images"
-                    });
-                    deleteImageFromServer(req.file)
-                }).catch(err => {res.json({code:501,msg:'problem to find user'})})
-            }
+        try{
             
-        }else{res.json({code:401,msg:'problem ...!!'})}
-    }
+            if(req.file){
+                let imgData = fs.readFileSync(req.file.path)
+                //imgDesc = req.body.textPic;
+                let stats = fs.statSync(req.file.path)
+                let imgSizeInBytes = stats.size/ (1024 * 1024);
+        
+           
+            if(imgData&&stats&&imgSizeInBytes){
+                if(imgSizeInBytes>100){
+                    res.json({
+                        code :400,
+                        msg:'image too big',
+                    });
+                    deleteImageFromServer(req.file);
+                }else{
+                  
+                    await User.findById(req.user.id).then(async user => {
+                        console.log('then')
+                        console.log(user.gallery.length)
+                        if (user.gallery.length <100) {
+                            
+                     
+                            let minibuffer = await compressImg(imgData);
+                            let newImgData = {
+                                image: minibuffer,
+                                update:new Date(),
+                            }
+                            
+                            user.gallery.push(newImgData);
+                            user.save().then(() => {
+                                
+                                res.json({
+                                    code: 200,
+                                    msg: "image uploaded",
+                                });
+                            }).catch(err =>res.json({code:400,msg:'problem to add image'}))
+                        } else res.json({
+                            code: 500,
+                            msg: "you can not upload anymore images"
+                        });
+                        deleteImageFromServer(req.file);
+                    }).catch(err => {res.json({code:501,msg:err.message});deleteImageFromServer(req.file);})
+                }
+                
+            }else{res.json({code:401,msg:'problem ...!!'})}
+        }
+        }catch(err){
+            res.json({msg:err})
+        }
+       
     });
     
 
     router.post("/gallery",async(req, res) => {
         try{
-            console.log('i am in gallery');
+            
             let userId=req.user.id;
             await User.findOne({userId}).then(user=>{
+             
                 
                 res.json({
                     code:200,
@@ -162,7 +170,37 @@ router.post("/verify/account",async(req, res) => {
         catch(err){res.json({code:500,msg:err.message})}
         
     });
+
     
+    router.post("/remove/picture",async(req, res) => {
+        try{
+            let userId=req.user.id;
+            let picId=req.body.imageId;
+            console.log('===>',picId)
+            await User.findById(userId).then(user => {
+              
+               let picIndex = user.gallery.findIndex(item => item._id == picId)
+                if (picIndex != -1) {
+                    user.gallery.splice(picIndex,1);
+                    user.save().then(() => {
+                        res.json({
+                            code:200,
+                            msg: "image deleted",
+                        });
+                    }).catch(err => res.send(err))
+                } else {
+                    res.json({
+                        code: 404,
+                        msg: "image not found"
+                    });
+                }
+            })
+        }
+        catch(err){res.json({code:500,msg:err.message})}
+        
+    });
+    
+
 
 export default router
 

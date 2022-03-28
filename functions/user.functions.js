@@ -55,17 +55,16 @@ export const SendVerifyEmail =(dest,username,secretCode)=> {
 
 export const galleryToBase64 =(galleryArry)=> {
     let galleryPayload=[]
-    let image={
-        img_id:'',
-        imageBase64:'',
-        update:'',
-    }
-    galleryArry.forEach(imageObject => {
-        image.imageId=imageObject._id
-        image.update=imageObject.update;
-        image.imageBase64=imageObject.image.toString('base64');
+  
+   
+    for(let i=0;i<galleryArry.length;i++){
+        let image={}
+        image.img_id=galleryArry[i]._id
+        image.update=galleryArry[i].update;
+        image.imageBase64=galleryArry[i].image.toString('base64');
         galleryPayload.push(image);
-    });
+    }
+    
     return galleryPayload;
 }
 
