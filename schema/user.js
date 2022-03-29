@@ -1,6 +1,5 @@
-import pkg from 'mongoose';
+import pkg from "mongoose";
 const { Schema, model } = pkg;
-
 
 const userSchema = Schema({
     name: {
@@ -18,183 +17,184 @@ const userSchema = Schema({
             trim: true,
             minLength: 2,
             maxLength: 20,
-           
         },
         firstName: {
             type: String,
             trim: true,
             minLength: 2,
             maxLength: 20,
-           
-        }
+        },
     },
     email: {
         value: {
             type: String,
-           // required: true,
+            // required: true,
             unique: true,
             trim: true,
             index: true,
-            
         },
         update: {
             type: Date,
-            default: Date.now
-        }
+            default: Date.now,
+        },
     },
     password: {
-
-            value: {
-                type: String,
-                // required: true,
-                 index: true,
-                 minLength: 8
-                
-            },
-            oldValue: {
-                type: String
-            },
-            update: {
-                type: Date,
-                default: Date.now
-            }
+        value: {
+            type: String,
+            // required: true,
+            index: true,
+            minLength: 8,
+        },
+        oldValue: {
+            type: String,
+        },
+        update: {
+            type: Date,
+            default: Date.now,
+        },
     },
     birth: {
         birthday: {
-            type: Date /*, required: true */
+            type: Date /*, required: true */,
         },
         age: {
-            type: Number
+            type: Number,
         },
         update: {
-            type: Date
-        }
+            type: Date,
+        },
     },
     gender: {
-        type: String /*, required: true */
+        type: String /*, required: true */,
     },
     phone: {
         value: {
             type: String,
         },
-        dialing_code:{
-            type:String,
+        dialing_code: {
+            type: String,
         },
-        update: Date
+        update: Date,
     },
     address: {
         country: {
             type: String,
             /*required: true,*/
-            trim: true
+            trim: true,
         },
         state: {
             type: String,
-            trim: true
+            trim: true,
         },
         state_district: {
             type: String,
-            trim: true
+            trim: true,
         },
         county: {
             type: String,
-            trim: true
+            trim: true,
         },
         road: {
             type: String,
-            trim: true
+            trim: true,
         },
         postcode: {
             type: String,
-            trim: true
+            trim: true,
         },
         state: {
             type: String,
-            trim: true
+            trim: true,
         },
         boundingbox: {
             lat1: {
-                type: String
+                type: String,
             },
             lat2: {
-                type: String
+                type: String,
             },
             long1: {
-                type: String
+                type: String,
             },
             long2: {
-                type: String
+                type: String,
             },
         },
         country_code: {
-            type: String
+            type: String,
         },
         town: {
-            type: String
+            type: String,
         },
         village: {
-            type: String
+            type: String,
         },
         update: {
-            type: Date
-        }
+            type: Date,
+        },
     },
-    profilePic:{
-        type:Buffer,
+    profilePic: {
+        type: Buffer,
         contentType: String,
         //required: true,
     },
     gallery: [
         {
-           image:{
-            type:Buffer,
-            contentType: String,
-            //required: true,
-           },
-           update:Date,
+            image: {
+                type: Buffer,
+                contentType: String,
+                //required: true,
+            },
+            update: Date,
         },
     ],
 
-    connection: [{
-        lat: String,
-        long: String,
-        device: String,
-        system: String,
-        connected_at: {
-            type: Date
+    connection: [
+        {
+            lat: String,
+            long: String,
+            device: String,
+            system: String,
+            connected_at: {
+                type: Date,
+            },
+            connection_duration: String,
+            isActive: Boolean,
         },
-        connection_duration: String,
-        isActive: Boolean
-    }],
+    ],
     secretCode: {
-        type: String
+        type: String,
     },
     isVerified: {
         type: Boolean,
-        default: false
+        default: false,
     },
-    blockedUsers: [{
-        type: Schema.Types.ObjectId,
-        ref: "user"
-    }],
+    blockedUsers: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "user",
+        },
+    ],
     education: {
         type: String,
-        minLength: 6
+        minLength: 6,
     },
     work: {
         type: String,
-        minLength: 6
+        minLength: 6,
     },
-    
-    message_box: [{
-        type: Schema.Types.ObjectId,
-        ref: "discussion"
-    }],
+
+    message_box: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "discussion",
+        },
+    ],
     created_date: {
         type: String,
     },
     oviv_currency: Number,
-    isOnline: Boolean
+    isOnline: Boolean,
 });
 
 const User = model("user", userSchema);
