@@ -10,6 +10,7 @@ import {
     deleteImageFromServer,
     galleryToBase64,
     SendVerifyEmail,
+    forLazyLoading,
 } from "../functions/user.functions.js";
 
 const storage = multer.diskStorage({
@@ -65,13 +66,19 @@ router.post("/add", (req, res) => {
 router.post("/verify/account", async (req, res) => {
     try {
         let userId = req.user.id;
-        let secretCode = req.body.secretCode;
+        let secretCodeFromUser = req.body.secretCode;
 
-        await User.findOne({
-            _id: userId,
-        })
-            .then((userFinded) => {
-                if (secretCode == userFinded.secretCode) {
+        await User.find(
+            {
+                _id: userId,
+            },
+            { secretCode: 1 }
+        )
+            .then((respSecretCode) => {
+                console.log("secretCode", respSecretCode[0].secretCode);
+                console.log("secretCodeFromUser", secretCodeFromUser);
+
+                if (secretCodeFromUser == respSecretCode[0].secretCode) {
                     User.updateOne({ _id: userId }, { isVerified: true })
                         .then((verify) => {
                             res.json({
@@ -119,36 +126,27 @@ router.post("/add/picture/", upload.single("newPic"), async (req, res) => {
                     });
                     deleteImageFromServer(req.file);
                 } else {
-                    await User.findById(req.user.id)
-                        .then(async (user) => {
-                            console.log("then");
-                            console.log(user.gallery.length);
-                            if (user.gallery.length < 100) {
-                                let minibuffer = await compressImg(imgData);
-                                let newImgData = {
-                                    image: minibuffer,
-                                    update: new Date(),
-                                };
-
-                                user.gallery.push(newImgData);
-                                user.save()
-                                    .then(() => {
-                                        res.json({
-                                            code: 200,
-                                            msg: "image uploaded",
-                                        });
-                                    })
-                                    .catch((err) =>
-                                        res.json({
-                                            code: 400,
-                                            msg: "problem to add image",
-                                        })
-                                    );
-                            } else
-                                res.json({
-                                    code: 500,
-                                    msg: "you can not upload anymore images",
-                                });
+                    let minibuffer = await compressImg(imgData);
+                    let newImgData = {
+                        image: minibuffer,
+                        update: new Date(),
+                    };
+                    await User.updateOne(
+                        { _id: req.user.id },
+                        {
+                            $push: {
+                                gallery: {
+                                    $each: [newImgData],
+                                    $position: 0,
+                                },
+                            },
+                        }
+                    )
+                        .then(async (resp) => {
+                            res.json({
+                                code: 200,
+                                msg: "image aded ..",
+                            });
                             deleteImageFromServer(req.file);
                         })
                         .catch((err) => {
@@ -168,12 +166,16 @@ router.post("/add/picture/", upload.single("newPic"), async (req, res) => {
 router.post("/gallery", async (req, res) => {
     try {
         let userId = req.user.id;
-        await User.findOne({ userId })
-            .then((user) => {
+
+        await User.findOne({ _id: userId }, { gallery: 2 })
+            .then((respGallery) => {
+                console.log("id ,", userId);
+                console.log("length", respGallery.gallery.length);
+                console.log("respGallery", respGallery._id);
                 res.json({
                     code: 200,
                     msg: "user find",
-                    gallery: galleryToBase64(user.gallery),
+                    gallery: galleryToBase64(respGallery.gallery),
                 });
             })
             .catch((err) => {
@@ -184,30 +186,83 @@ router.post("/gallery", async (req, res) => {
     }
 });
 
+router.post("/gallery/test", async (req, res) => {
+    try {
+        let start = req.body.start;
+        let step = req.body.end;
+        let userId = req.user.id;
+        await User.find(
+            { _id: userId },
+            {
+                gallery: {
+                    $slice: [parseInt(start), parseInt(step)],
+                },
+            }
+        )
+
+            .then((resp) => {
+                console.log("gallery : ", resp[0].gallery.length);
+                for (let i = 0; i < resp[0].gallery.length; i++) {
+                    console.log("a", resp[0].gallery[i]._id);
+                }
+                res.json({ code: 200, msg: "ok" });
+            })
+            .catch((err) => {
+                res.json({ code: 402, msg: err.message });
+            });
+    } catch (err) {
+        res.json({ code: 500, msg: err.message });
+    }
+});
+
 router.post("/remove/picture", async (req, res) => {
     try {
         let userId = req.user.id;
         let picId = req.body.imageId;
-        console.log("===>", picId);
-        await User.findById(userId).then((user) => {
-            let picIndex = user.gallery.findIndex((item) => item._id == picId);
-            if (picIndex != -1) {
-                user.gallery.splice(picIndex, 1);
-                user.save()
-                    .then(() => {
+
+        await User.findOne({ _id: userId }, { gallery: 1 })
+            .then((respGellery) => {
+                /**respGellery[[shjksjk,siuhjd,iojjdio]] */
+                let arrayWithOuttarget = [];
+                for (let i = 0; i < respGellery.gallery.length; i++) {
+                    if (respGellery.gallery[i]._id == picId) {
+                        respGellery.gallery.splice(i, 1);
+
+                        break;
+                    }
+                    console.log("i : ", i);
+                }
+                arrayWithOuttarget = respGellery.gallery;
+                User.updateOne(
+                    { _id: userId },
+                    {
+                        $set: {
+                            gallery: arrayWithOuttarget,
+                        },
+                    },
+                    { multi: true }
+                )
+                    .then((resp) => {
+                        console.log(resp);
                         res.json({
                             code: 200,
-                            msg: "image deleted",
+                            msg: "image deleted ... !",
                         });
                     })
-                    .catch((err) => res.send(err));
-            } else {
+                    .catch((err) => {
+                        res.json({
+                            code: 402,
+                            msg: err,
+                        });
+                    });
+            })
+            .catch((err) => {
+                console.log(err);
                 res.json({
-                    code: 404,
-                    msg: "image not found",
+                    code: 500,
+                    msg: err.message,
                 });
-            }
-        });
+            });
     } catch (err) {
         res.json({ code: 500, msg: err.message });
     }
@@ -217,37 +272,39 @@ router.post("/change/profile/picture", async (req, res) => {
     try {
         let userId = req.user.id;
         let imageId = req.body.imageId;
-        await User.findById(userId)
-            .then((user) => {
-                let image = user.gallery.filter((image) => image.id == imageId);
-                if (image.length == 0) {
-                    res.json({
-                        code: 402,
-                        msg: "image not found",
+        await User.findOne(
+            { _id: userId },
+            { _id: 0, gallery: { $elemMatch: { _id: imageId } } }
+        )
+            .then((image) => {
+                if (image.gallery.length > 0) {
+                    User.updateOne(
+                        { _id: userId },
+                        {
+                            $set: {
+                                profilePic: image.gallery[0].image,
+                            },
+                        }
+                    ).then((result) => {
+                        console.log(result);
+                        res.json({
+                            code: 200,
+                            msg: "profile pic updated ...",
+                            profilePic:
+                                image.gallery[0].image.toString("base64"),
+                        });
                     });
                 } else {
-                    console.log(image[0].id);
-                    user.profilePic = image[0].image;
-                    user.save()
-                        .then((user) => {
-                            res.json({
-                                code: 200,
-                                msg: "changed success",
-                                profilePic: image[0].image.toString("base64"),
-                            });
-                        })
-                        .catch((err) => {
-                            res.json({
-                                code: 500,
-                                msg: err,
-                            });
-                        });
+                    res.json({
+                        code: 402,
+                        msg: "can t find the image",
+                    });
                 }
             })
             .catch((err) => {
                 res.json({
                     code: 404,
-                    msg: "can t find user",
+                    msg: err.message,
                 });
             });
     } catch (err) {
