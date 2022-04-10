@@ -163,7 +163,7 @@ router.post("/add/picture/", upload.single("newPic"), async (req, res) => {
     }
 });
 
-router.post("/gallery", async (req, res) => {
+router.post("/gallery/oroginal", async (req, res) => {
     try {
         let userId = req.user.id;
 
@@ -186,16 +186,26 @@ router.post("/gallery", async (req, res) => {
     }
 });
 
-router.post("/gallery/test", async (req, res) => {
+router.post("/gallery", async (req, res) => {
     try {
         let start = req.body.start;
-        let step = req.body.end;
+        let step = req.body.step;
+        console.log("start variable : ", start);
+        console.log(
+            "startPosition : ",
+            start,
+            "  end position :",
+            start + step
+        );
+
+        let arrStartStep = [parseInt(start), parseInt(step)];
         let userId = req.user.id;
+
         await User.find(
             { _id: userId },
             {
                 gallery: {
-                    $slice: [parseInt(start), parseInt(step)],
+                    $slice: arrStartStep,
                 },
             }
         )
@@ -205,12 +215,18 @@ router.post("/gallery/test", async (req, res) => {
                 for (let i = 0; i < resp[0].gallery.length; i++) {
                     console.log("a", resp[0].gallery[i]._id);
                 }
-                res.json({ code: 200, msg: "ok" });
+                res.json({
+                    code: 200,
+                    msg: "ok",
+                    gallery: galleryToBase64(resp[0].gallery),
+                });
             })
             .catch((err) => {
+                console.log("1");
                 res.json({ code: 402, msg: err.message });
             });
     } catch (err) {
+        console.log("2");
         res.json({ code: 500, msg: err.message });
     }
 });
