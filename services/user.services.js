@@ -328,4 +328,50 @@ router.post("/change/profile/picture", async (req, res) => {
     }
 });
 
+router.post("/update/hashtags", async (req, res) => {
+    try {
+        let userId = req.user.id;
+        let arrayHshtags = req.body.hashtags; //array of hashtags
+        await User.updateOne(
+            { _id: userId },
+            {
+                $set: {
+                    hashtags: arrayHshtags,
+                },
+            }
+        ).then((result) => {
+            console.log(result);
+            if (result.matchedCount == 1 && result.acknowledged) {
+                res.json({
+                    code: 200,
+                    msg: "hashtags updated",
+                    hashtags: arrayHshtags,
+                });
+            }
+        });
+    } catch (err) {
+        res.json({ code: 500, msg: err.message });
+    }
+});
+router.post("/get/hashtags", async (req, res) => {
+    try {
+        let userId = req.user.id;
+        await User.findOne({ id: userId }, { hashtags: 1, _id: 0 })
+            .then((hashtagsArray) => {
+                res.json({
+                    code: 200,
+                    msg: "ok",
+                    hashtags: hashtagsArray.hashtags,
+                });
+            })
+            .catch((err) => {
+                res.json({
+                    code: 400,
+                    msg: "problem : " + err.message,
+                });
+            });
+    } catch (err) {
+        res.json({ code: 500, msg: err.message });
+    }
+});
 export default router;

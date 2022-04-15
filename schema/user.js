@@ -138,6 +138,19 @@ const userSchema = Schema({
         contentType: String,
         //required: true,
     },
+    bio: {
+        type: String,
+    },
+    hashtags: [
+        {
+            type: String,
+        },
+    ],
+    interests: [
+        {
+            type: String,
+        },
+    ],
     gallery: [
         {
             image: {
